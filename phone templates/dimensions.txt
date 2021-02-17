@@ -1,0 +1,5 @@
+iphoneX 375x812
+iphone 678Plus 414x736
+iphone 678 375x667
+ipad	768x1024
+galaxy s9 360x740

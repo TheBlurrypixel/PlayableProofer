@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<!--
+Playable Proofer by Michael Gochoco
+(c) 2021 Michael Gochoco
+v0.9.1
+
+An iframe previewer for Playable HTML ads in various devices and aspect ratios
+If you preview on a mobie device it will switch to fullscreen
+-->
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Dosis:wght@500&family=Fugaz+One&family=Julius+Sans+One&family=Nanum+Myeongjo:wght@700&family=Playball&family=Spartan:wght@300&family=Staatliches&display=swap" rel="stylesheet">
+    <title>Playable Proofer</title>
+    <style>
+      body {
+        margin: 0;
+        background-color: rgb(40,40,48);
+        color: white;
+      }
+
+      #iframeContent {
+        display: block;
+        position: absolute;
+        top: 70px;
+        bottom: 0;
+        width: 100%;
+      }
+
+      #iframeHolder {
+        position: relative;
+        height: 60vh;
+        width: 60vh;
+        top: 50%;
+        left: 50%;
+        margin-top: -30vh; /* Negative half of height. */
+        margin-left: -30vh; /* Negative half of width. */
+        /* background-color: green; */
+      }
+
+      #loadFrameHolder {
+        position: fixed;
+        display: block;
+        left: 50%;
+        top: 10px;
+        margin-left: -150px;
+        width: 300px;
+        height: 50px;
+        color: black;
+        z-index: 1001;
+      }
+
+      #loadframeBtn {
+        position: relative;
+        display: block;
+        margin-left: 80px;
+        top: 0px;
+        left: 0px;
+        width: 100px;
+        height: 20px;
+        background-color: gray;
+        color: white;
+        padding-left: 25px;
+        padding-top: 2px;
+        margin-bottom: 5px;
+        cursor: pointer;
+        border: 1px solid black;
+        border-radius: 20px;
+      }
+
+      #playableFrame {
+        display: block;
+        border-style: none;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+      }
+
+      #deviceContent {
+        display: block;
+        position: absolute;
+        top: 70px;
+        bottom: 0;
+        width: 100%;
+        pointer-events: none;
+      }
+
+      #deviceImageHolder {
+        position: relative;
+        height: 60vh;
+        width: 60vh;
+        top: 50%;
+        left: 50%;
+        margin-top: -30vh; /* Negative half of height. */
+        margin-left: -30vh; /* Negative half of width. */
+      }
+
+      #deviceImage {
+        display: block;
+        border-style: none;
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .rotate {
+        transform: rotate(90deg);
+        transform-origin: 50% 50%;
+      }
+
+      #rotateIcon {
+        margin-top: 10px;
+      }
+
+      #devices {
+        font-family: 'Julius Sans One', sans-serif;
+        font-size: 18px;
+        width: 10vw;
+        height: 40px;
+      }
+
+      #navbar {
+        position: fixed;
+        top: 0px;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+        height: 70px;
+        background-color: lightblue;
+        color: black;
+        font-family: 'Staatliches', cursive;
+        font-size: 36px;
+        box-shadow: 0 10px 10px rgba(0,0,0,0.23);
+        z-index: 1001;
+      }
+
+      header :link, header :visited {
+        color: black;
+        text-decoration: none;
+      }
+
+      .nav-box {
+        padding-right: 20px;
+        cursor: pointer;
+      }
+
+      .justify-left {
+        display: block;
+        position: absolute;
+        left: 25px;
+      }
+
+      .center {
+        display: block;
+        margin: 0 auto;
+        max-width:100%;
+        max-height:100%;
+      }
+
+      .vertical-center {
+        /* you can make position absolute if you center to the page */
+        position: relative;
+        top: 50%;
+        -ms-transform: translateY(-50%);
+        transform: translateY(-50%);
+      }
+
+      #urlDiv {
+        display: block;
+      }
+
+      #urlLabel {
+        display: inline;
+      }
+
+      #url {
+        display: inline;
+        position: relative;
+      }
+
+      @media only screen and (max-width: 760px) {
+        #navbar, #deviceContent, #urlLabel { display: none; }
+        #playableFrame {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+        }
+        #loadframeBtn {
+          position: fixed;
+          margin-left: 0px;
+          top: 10px;
+          left: 10px;
+          width: 73px;
+          height: 20px;
+          padding-left: 15px;
+          padding-top: 6px;
+          font-size: small;
+        }
+        #url {
+          display: block;
+          position: fixed;
+          top: 13px;
+          right: 10px;
+        }
+      }
+    </style>
+    <script>
+      var isLandscape = false;
+      const FRAME_TO_DEVICE_RATIO = 0.752;
+      var zoomLevel = 80;
+      const devicesMap = new Map([
+        ['iphonex', [375,812, 'images/iphonex.png']],
+        ['iphone678plus', [414,736, 'images/iphone678plus.png']],
+        ['ipad', [768,1024, 'images/ipad.png']],
+        ['galaxys9', [420,740, 'images/galaxys9.png']],
+      ].map( i=>[i[0],{w:i[1][0], h:i[1][1], src:i[1][2]} ]));
+
+      var curDevice = '';
+      function GetURLParameter(sParam) {
+          var sPageURL = window.location.search.substring(1);
+          var sURLVariables = sPageURL.split('&');
+          for (var i = 0; i < sURLVariables.length; i++) {
+              var sParameterName = sURLVariables[i].split('=');
+              if (sParameterName[0] == sParam) {
+                  return sParameterName[1];
+              }
+          }
+      }
+
+      function init() {
+        var playableSrc = GetURLParameter("playableSrc");
+        if(!!playableSrc) {
+          var playableFrame = document.getElementById('playableFrame');
+          playableFrame.src = playableSrc;
+        }
+
+        updateDevice('galaxys9');
+
+        var dropDownMenu = document.getElementById('devices');
+        if(!!dropDownMenu) dropDownMenu.value = curDevice;
+      }
+
+      function updateSizes(aspect) {
+        var iframeHolder = document.getElementById('iframeHolder');
+        var deviceImageHolder = document.getElementById('deviceImageHolder');
+        var deviceImage = document.getElementById('deviceImage');
+        var iframeWidth, iframeHeight, deviceImgWidth, deviceImgHeight;
+        if(!!aspect) {
+          if(isLandscape) {
+            deviceImage.className = 'rotate';
+            iframeWidth = zoomLevel*FRAME_TO_DEVICE_RATIO;
+            iframeHeight = iframeWidth * aspect;
+          }
+          else {
+            deviceImage.className = null;
+            iframeHeight = zoomLevel*FRAME_TO_DEVICE_RATIO;
+            iframeWidth = iframeHeight * aspect;
+          }
+          deviceImgHeight = zoomLevel;
+          deviceImgWidth = 0.7*zoomLevel;
+
+          deviceImageHolder.style.width = deviceImgWidth + 'vh';
+          deviceImageHolder.style.height = deviceImgHeight + 'vh';
+          deviceImageHolder.style.marginTop = -Math.floor(deviceImgHeight/2) + 'vh';
+          deviceImageHolder.style.marginLeft = -Math.floor(deviceImgWidth/2) + 'vh';
+
+          iframeHolder.style.width = iframeWidth + 'vh';
+          iframeHolder.style.height = iframeHeight + 'vh';
+          iframeHolder.style.marginTop = -Math.floor(iframeHeight/2) + 'vh';
+          iframeHolder.style.marginLeft = -Math.floor(iframeWidth/2) + 'vh';
+        }
+      }
+
+      function updateDevice(device, rotating = false) {
+        var deviceChange = false;
+        if(!!device) {
+          deviceChange = curDevice !== device;
+          curDevice = device;
+        }
+
+        // test if not mobile - if mobile do nothing and let the CSS do the work
+        if(!!curDevice && window.innerWidth > 760) {
+          var deviceDims = devicesMap.get(curDevice);
+          var aspect = deviceDims.w/deviceDims.h;
+
+          if(deviceChange || rotating) {
+            var deviceImage = document.getElementById('deviceImage');
+
+            deviceImage.onload = () => {
+              updateSizes(aspect);
+              deviceImage.onload = null;
+            };
+            deviceImage.src = deviceDims.src;
+          }
+          else
+            updateSizes(aspect);
+        }
+      }
+
+      function rotateDevice() {
+        isLandscape = !isLandscape;
+        updateDevice(null, true);
+      }
+
+      function loadFrame(evt) {
+        var playableFrame = document.getElementById('playableFrame');
+        if(evt.currentTarget.type=='file') {
+          var file = evt.currentTarget.files[0];
+          const reader = new FileReader();
+          reader.onload = function(){
+            var html = reader.result;
+            playableFrame.src = 'data:text/html,' + encodeURIComponent(html);
+          }
+          reader.readAsText(file);
+        }
+        else if(evt.currentTarget.type=='url') {
+          playableFrame.src = evt.currentTarget.value;
+        }
+        var loadFrameFile = document.getElementById('loadFrame');
+        var loadFrameUrl = document.getElementById('url');
+        loadFrameFile.value = "";
+        loadFrameUrl.value = "";
+      }
+
+      function trigger() {
+        var loadFrameFile = document.getElementById('loadFrame');
+        var evt = new MouseEvent('click');
+         loadFrameFile.dispatchEvent(evt);
+      }
+    </script>
+  </head>
+  <body onload="init()">
+    <header id="header">
+      <nav id="navbar">
+        <div class="nav-box justify-left">Playable Proofer</div>
+        <div class="nav-box">
+          <select name="devices" id="devices" class="center" onchange='updateDevice(this.value)'>
+            <option value='iphonex'>
+              iPhone X
+            </option>
+            <option value='iphone678plus'>
+              iPhone 6/7/8 Plus
+            </option>
+            <option value='ipad'>
+              iPad
+            </option>
+            <option value='galaxys9'>
+              Galaxy s9
+            </option>
+          </select>
+        </div>
+        <div class="nav-box" onclick='rotateDevice()'><image id="rotateIcon" width=40 height=36 src="images/rotate.svg" /></div>
+      </nav>
+    </header>
+
+    <div id='iframeContent'>
+      <div id='iframeHolder'>
+        <iframe id='playableFrame' src="" title="playable" onload="updateDevice()"></iframe>
+      </div>
+    </div>
+
+    <div id='deviceContent'>
+      <div id="deviceImageHolder">
+        <image id="deviceImage" width=760 height=1080 src='' />
+      </div>
+    </div>
+
+    <div id='loadFrameHolder'>
+      <div>
+          <input id="loadFrame" type="file" style="display: none" onchange="loadFrame(event)">
+          <span id='val'></span>
+          <span id='loadframeBtn' onclick="trigger();">Select File</span>
+      </div>
+      <div id='urlDiv'>
+        <label id="urlLabel" for="url">OR </label>
+        <input type="url" name="url" id="url" placeholder="https://example.com" pattern="https://.*" size="30" onchange="loadFrame(event)">
+      </div>
+    </div>
+  </body>
+</html>
