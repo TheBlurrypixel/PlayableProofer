@@ -257,9 +257,7 @@ If you preview on a mobie device it will switch to fullscreen
         if(!!dropDownMenu) dropDownMenu.value = curDevice;
       }
 
-      var dirty = false;
-
-      function updateSizes(aspect, yOffset) {
+      function updateSizes(aspect) {
         var iframeHolder = document.getElementById('iframeHolder');
         var deviceImageHolder = document.getElementById('deviceImageHolder');
         var deviceImage = document.getElementById('deviceImage');
@@ -269,20 +267,11 @@ If you preview on a mobie device it will switch to fullscreen
             deviceImage.className = 'rotate';
             iframeWidth = zoomLevel*FRAME_TO_DEVICE_RATIO;
             iframeHeight = iframeWidth * aspect;
-            if(curDevice == 'galaxys9')
-              deviceImage.style.top = '0.7vh';
-            else if(curDevice == 'iphone678plus')
-              deviceImage.style.top = '-0.2vh';
-            else if(curDevice == 'iphonex')
-              deviceImage.style.top = '-0.2vh';
-            else
-              deviceImage.style.top = '0';
           }
           else {
             deviceImage.className = null;
             iframeHeight = zoomLevel*FRAME_TO_DEVICE_RATIO;
             iframeWidth = iframeHeight * aspect;
-            deviceImage.style.top = '0';
           }
           deviceImgHeight = zoomLevel;
           deviceImgWidth = 0.7*zoomLevel;
@@ -291,8 +280,6 @@ If you preview on a mobie device it will switch to fullscreen
           deviceImageHolder.style.height = deviceImgHeight + 'vh';
           deviceImageHolder.style.marginTop = -Math.floor(deviceImgHeight/2) + 'vh';
           deviceImageHolder.style.marginLeft = -Math.floor(deviceImgWidth/2) + 'vh';
-
-          iframeHeight += dirty?1:-1;
 
           iframeHolder.style.width = iframeWidth + 'vh';
           iframeHolder.style.height = iframeHeight + 'vh';
@@ -314,7 +301,6 @@ If you preview on a mobie device it will switch to fullscreen
           var aspect = deviceDims.w/deviceDims.h;
 
           if(deviceChange || rotating) {
-            dirty = !dirty; // forces resize on iframe
             var deviceImage = document.getElementById('deviceImage');
 
             deviceImage.onload = () => {
