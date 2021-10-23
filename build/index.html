@@ -251,7 +251,7 @@ If you preview on a mobie device it will switch to fullscreen
           playableFrame.src = playableSrc;
         }
 
-        updateDevice('galaxys9');
+        updateDevice('galaxys9', false, true);
 
         var dropDownMenu = document.getElementById('devices');
         if(!!dropDownMenu) dropDownMenu.value = curDevice;
@@ -288,7 +288,7 @@ If you preview on a mobie device it will switch to fullscreen
         }
       }
 
-      function updateDevice(device, rotating = false) {
+      function updateDevice(device, rotating = false, initializing = false) {
         var deviceChange = false;
         if(!!device) {
           deviceChange = curDevice !== device;
@@ -312,6 +312,9 @@ If you preview on a mobie device it will switch to fullscreen
           else
             updateSizes(aspect);
         }
+
+        if(!initializing && deviceChange)
+          document.getElementById('playableFrame').contentWindow.location.reload();
       }
 
       function rotateDevice() {
