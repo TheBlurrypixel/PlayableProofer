@@ -77,6 +77,24 @@ If you preview on a mobie device it will switch to fullscreen
         background-color: black;
       }
 
+      .inputlabel {
+        display: block;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      #zoomlvl {
+        display: inline;
+        position: relative;
+        margin-left: 10px;
+        width:50%;
+      }
+
+      .zoom {
+        width: 10%;
+      }
+
       #deviceContent {
         display: block;
         position: absolute;
@@ -144,6 +162,10 @@ If you preview on a mobie device it will switch to fullscreen
 
       .nav-box {
         padding-right: 20px;
+        cursor: pointer;
+      }
+
+      .nav-box-none {
         cursor: pointer;
       }
 
@@ -224,7 +246,8 @@ If you preview on a mobie device it will switch to fullscreen
 
       var isLandscape = false;
       const FRAME_TO_DEVICE_RATIO = 0.752;
-      var zoomLevel = 80;
+      var zoomLevel = 100;
+
       const devicesMap = new Map([
         ['iphonex', [375,812, iphonex_data]],
         ['iphone678plus', [414,736, iphone678plus_data]],
@@ -248,10 +271,23 @@ If you preview on a mobie device it will switch to fullscreen
         var playableSrc = GetURLParameter("playableSrc");
         if(!!playableSrc) {
           var playableFrame = document.getElementById('playableFrame');
-          playableFrame.src = playableSrc;
+          var myEvent = {type: 'url', currentTarget: {type: "url", value: playableSrc}};
+
+          var inputFrame = document.getElementById('url');
+//          <input type="url" name="url" id="url" placeholder="https://example.com" pattern="https://.*" size="30" onchange="loadFrame(event)">
+
+          inputFrame.value = playableSrc;
+          setTimeout(() => {
+            triggerURL();
+//            loadFrame(myEvent);
+//            playableFrame.src = playableSrc;
+          }, 2000);
+
+          var zoomInput = document.getElementById('zoomlvl');
+          zoomInput.value = zoomLevel;
         }
 
-        updateDevice('galaxys9', false, true);
+        updateDevice('iphonex', false, true);
 
         var dropDownMenu = document.getElementById('devices');
         if(!!dropDownMenu) dropDownMenu.value = curDevice;
@@ -262,6 +298,10 @@ If you preview on a mobie device it will switch to fullscreen
         var deviceImageHolder = document.getElementById('deviceImageHolder');
         var deviceImage = document.getElementById('deviceImage');
         var iframeWidth, iframeHeight, deviceImgWidth, deviceImgHeight;
+
+        var zoomInput = document.getElementById('zoomlvl');
+        zoomLevel = parseInt(zoomInput.value);
+
         if(!!aspect) {
           if(isLandscape) {
             deviceImage.className = 'rotate';
@@ -335,6 +375,7 @@ If you preview on a mobie device it will switch to fullscreen
         }
         else if(evt.currentTarget.type=='url') {
           playableFrame.src = evt.currentTarget.value;
+          console.log("setting" + playableFrame.src);
         }
         var loadFrameFile = document.getElementById('loadFrame');
         var loadFrameUrl = document.getElementById('url');
@@ -347,13 +388,32 @@ If you preview on a mobie device it will switch to fullscreen
         var evt = new MouseEvent('click');
          loadFrameFile.dispatchEvent(evt);
       }
+
+      function triggerURL() {
+        var loadFrameUrl = document.getElementById('url');
+        if ("createEvent" in document) {
+          var evt = document.createEvent("HTMLEvents");
+          evt.initEvent("change", false, true);
+          loadFrameUrl.dispatchEvent(evt);
+        }
+        else
+          loadFrameUrl.fireEvent("onchange");
+        // var evt = new MouseEvent('click');
+        // loadFrameFile.dispatchEvent(evt);
+      }
     </script>
   </head>
   <body onload="init()">
     <header id="header">
       <nav id="navbar">
         <div class="nav-box justify-left">Playable Proofer</div>
-        <div class="nav-box" onclick="document.getElementById('playableFrame').contentWindow.location.reload()"><image id="rotateIcon" width=40 height=36 src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyNS40LjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgdmlld0JveD0iMCAwIDI1NiAyNTYiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDI1NiAyNTY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxnIGlkPSJMYXllcl8xIj4NCjwvZz4NCjxnIGlkPSJMYXllcl8yIj4NCgk8cGF0aCBkPSJNMjIuMTcsMTYwLjMzYzIuNDIsNy40NCw1LjY4LDE0LjY2LDkuNzEsMjEuNDNjNC4zMiw3LjI3LDkuNDgsMTQuMDEsMTUuMzUsMjAuMDJsMjguNjItMjcuOTUNCgkJYy0zLjY1LTMuNzQtNi44Ny03Ljk0LTkuNTctMTIuNDljLTIuNTItNC4yNC00LjU1LTguNzQtNi4wNi0xMy4zN0wyMi4xNywxNjAuMzN6Ii8+DQoJPHBhdGggZD0iTTYyLDIxNC4zNmM2Ljk4LDQuOTEsMTQuNTYsOC45NywyMi41NCwxMi4wN2wxNC41LTM3LjI4Yy00Ljk3LTEuOTMtOS42OS00LjQ2LTE0LjAzLTcuNTFMNjIsMjE0LjM2eiIvPg0KCTxwYXRoIGQ9Ik0xMDYsMjMyLjI5YzQuMjcsMC43LDguNjIsMS4xNCwxMi45MywxLjMxYzMuMjEsMC4xMyw2LjQ3LDAuMTEsOS42OS0wLjA2bC0yLjA4LTM5Ljk1Yy0yLDAuMS00LjAzLDAuMTItNi4wMywwLjA0DQoJCWMtMi42OS0wLjExLTUuNDEtMC4zOC04LjA3LTAuODFMMTA2LDIzMi4yOXoiLz4NCgk8cGF0aCBkPSJNMTM5LjIsMTkxLjY3bDkuODIsMzguNzhjMy45OC0xLjAxLDcuOTUtMi4yNywxMS44LTMuNzRsLTE0LjI5LTM3LjM2QzE0NC4xNCwxOTAuMjcsMTQxLjY3LDE5MS4wNSwxMzkuMiwxOTEuNjd6Ii8+DQoJPHBhdGggZD0iTTE2Mi45MiwxODAuMjVsMjQuMTMsMzEuOWMyLjI5LTEuNzMsNC41My0zLjU3LDYuNjYtNS40OGwtMjYuNjQtMjkuODRDMTY1Ljc0LDE3OC4wMywxNjQuMzUsMTc5LjE3LDE2Mi45MiwxODAuMjV6Ii8+DQoJPHBhdGggZD0iTTIxNC4xOCw3My41NmMzLjUyLDUuOTMsNi40MiwxMi4xMSw4LjcxLDE4LjVsMTkuMDMtNi4yNmwtMjIuNTksNjMuNDJMMTYzLjUsMTExLjZsMjEuMzYtNy4wMw0KCQljLTEuMzctMy42NS0zLjA1LTcuMTktNS4wNy0xMC42Yy05LTE1LjE2LTIzLjM2LTI1LjkxLTQwLjQ0LTMwLjI3Yy0xNy4wOC00LjM2LTM0Ljg0LTEuOC01MCw3LjINCgkJYy0yMi40OCwxMy4zNC0zNC45OCwzOC43My0zMS44Niw2NC42OWwtMzkuNzEsNC43OGMtMC43OS02LjU2LTAuOTYtMTMuMDktMC41NC0xOS41M2MyLjI0LTM0LjQ5LDIxLjI4LTY2LjI5LDUxLjY5LTg0LjM0DQoJCUMxMTkuMTksNi42OCwxODQuMzUsMjMuMywyMTQuMTgsNzMuNTZ6Ii8+DQo8L2c+DQo8L3N2Zz4NCg==" /></div>
+        <div class="nav-box" onclick="document.getElementById('playableFrame').contentWindow.location.reload()">
+          <image id="rotateIcon" width=40 height=36 src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyNS40LjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgdmlld0JveD0iMCAwIDI1NiAyNTYiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDI1NiAyNTY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxnIGlkPSJMYXllcl8xIj4NCjwvZz4NCjxnIGlkPSJMYXllcl8yIj4NCgk8cGF0aCBkPSJNMjIuMTcsMTYwLjMzYzIuNDIsNy40NCw1LjY4LDE0LjY2LDkuNzEsMjEuNDNjNC4zMiw3LjI3LDkuNDgsMTQuMDEsMTUuMzUsMjAuMDJsMjguNjItMjcuOTUNCgkJYy0zLjY1LTMuNzQtNi44Ny03Ljk0LTkuNTctMTIuNDljLTIuNTItNC4yNC00LjU1LTguNzQtNi4wNi0xMy4zN0wyMi4xNywxNjAuMzN6Ii8+DQoJPHBhdGggZD0iTTYyLDIxNC4zNmM2Ljk4LDQuOTEsMTQuNTYsOC45NywyMi41NCwxMi4wN2wxNC41LTM3LjI4Yy00Ljk3LTEuOTMtOS42OS00LjQ2LTE0LjAzLTcuNTFMNjIsMjE0LjM2eiIvPg0KCTxwYXRoIGQ9Ik0xMDYsMjMyLjI5YzQuMjcsMC43LDguNjIsMS4xNCwxMi45MywxLjMxYzMuMjEsMC4xMyw2LjQ3LDAuMTEsOS42OS0wLjA2bC0yLjA4LTM5Ljk1Yy0yLDAuMS00LjAzLDAuMTItNi4wMywwLjA0DQoJCWMtMi42OS0wLjExLTUuNDEtMC4zOC04LjA3LTAuODFMMTA2LDIzMi4yOXoiLz4NCgk8cGF0aCBkPSJNMTM5LjIsMTkxLjY3bDkuODIsMzguNzhjMy45OC0xLjAxLDcuOTUtMi4yNywxMS44LTMuNzRsLTE0LjI5LTM3LjM2QzE0NC4xNCwxOTAuMjcsMTQxLjY3LDE5MS4wNSwxMzkuMiwxOTEuNjd6Ii8+DQoJPHBhdGggZD0iTTE2Mi45MiwxODAuMjVsMjQuMTMsMzEuOWMyLjI5LTEuNzMsNC41My0zLjU3LDYuNjYtNS40OGwtMjYuNjQtMjkuODRDMTY1Ljc0LDE3OC4wMywxNjQuMzUsMTc5LjE3LDE2Mi45MiwxODAuMjV6Ii8+DQoJPHBhdGggZD0iTTIxNC4xOCw3My41NmMzLjUyLDUuOTMsNi40MiwxMi4xMSw4LjcxLDE4LjVsMTkuMDMtNi4yNmwtMjIuNTksNjMuNDJMMTYzLjUsMTExLjZsMjEuMzYtNy4wMw0KCQljLTEuMzctMy42NS0zLjA1LTcuMTktNS4wNy0xMC42Yy05LTE1LjE2LTIzLjM2LTI1LjkxLTQwLjQ0LTMwLjI3Yy0xNy4wOC00LjM2LTM0Ljg0LTEuOC01MCw3LjINCgkJYy0yMi40OCwxMy4zNC0zNC45OCwzOC43My0zMS44Niw2NC42OWwtMzkuNzEsNC43OGMtMC43OS02LjU2LTAuOTYtMTMuMDktMC41NC0xOS41M2MyLjI0LTM0LjQ5LDIxLjI4LTY2LjI5LDUxLjY5LTg0LjM0DQoJCUMxMTkuMTksNi42OCwxODQuMzUsMjMuMywyMTQuMTgsNzMuNTZ6Ii8+DQo8L2c+DQo8L3N2Zz4NCg==" />
+        </div>
+        <div class="nav-box zoom">
+          <!--p style="font-family: Arial, Helvetica, sans-serif; font-size: 16px;">zoom level</p-->
+          <label class="inputlabel" for="zoomlvl">Zoom<input id="zoomlvl" type="number" value="80" onchange='updateDevice()'></label>
+        </div>
         <!--div><button onclick="document.getElementById('playableFrame').contentWindow.location.reload()">test button</button></div-->
         <div class="nav-box">
           <select name="devices" id="devices" class="center" onchange='updateDevice(this.value)'>
